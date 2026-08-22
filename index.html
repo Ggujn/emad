@@ -57,6 +57,9 @@
     .muted{color:var(--muted);font-size:12px}
     .report-detail{padding:12px 0}
     .report-detail div{margin-bottom:8px}
+    .edit-mode .hidden-in-edit{display:none !important}
+    .edit-mode .show-in-edit{display:block !important}
+    .show-in-edit{display:none !important}
     @media(max-width:850px){.grid,.stats,.photo-grid{grid-template-columns:repeat(2,1fr)}}
     @media(max-width:520px){.grid,.stats,.photo-grid{grid-template-columns:1fr};header{flex-direction:column;align-items:flex-start}}
   </style>
@@ -132,7 +135,7 @@
 
       <section id="new" class="hidden">
         <div class="card">
-          <h2>بيانات التقرير</h2>
+          <h2 id="formTitle">بيانات التقرير</h2>
           <div class="grid">
             <div><label>التاريخ</label><input id="date" type="date"></div>
             <div><label>الشفت</label><select id="shift"><option>صباحي</option><option>مسائي</option><option>ليلي</option></select></div>
@@ -163,8 +166,9 @@
           <textarea id="notes" placeholder="اكتب أي ملاحظات على الاستلام أو الفحص أو الإنتاج..."></textarea>
           <br><br>
           <div class="actions">
-            <button class="btn primary" type="button" onclick="saveReport()">حفظ التقرير</button>
+            <button class="btn primary" type="button" id="saveBtn" onclick="saveReport()">حفظ التقرير</button>
             <button class="btn secondary" type="button" onclick="resetForm()">مسح</button>
+            <button class="btn secondary show-in-edit" type="button" onclick="cancelEdit()">إلغاء التعديل</button>
           </div>
         </div>
       </section>
@@ -192,6 +196,7 @@
     const CURRENT_USER_KEY = 'strawberry_current_user_v1';
     let currentUser = null;
     let images = { recvPreview: [], qcPreview: [], prodPreview: [], palletPreview: [] };
+    let editingReportId = null;
 
     function getUsers() {
       try {
@@ -371,6 +376,62 @@
       });
       images = { recvPreview: [], qcPreview: [], prodPreview: [], palletPreview: [] };
       document.getElementById('date').value = new Date().toISOString().slice(0, 10);
+      editingReportId = null;
+      document.getElementById('formTitle').textContent = 'بيانات التقرير';
+      document.getElementById('saveBtn').textContent = 'حفظ التقرير';
+      document.getElementById('new').classList.remove('edit-mode');
+    }
+
+    function editReport(id) {
+      const r = getCurrentReports().find(x => x.id === id);
+      if (!r) return;
+      
+      editingReportId = id;
+      document.getElementById('date').value = r.date;
+      document.getElementById('shift').value = r.shift;
+      document.getElementById('supplier').value = r.supplier;
+      document.getElementById('batch').value = r.batch;
+      document.getElementById('pallet').value = r.pallet;
+      document.getElementById('raw').value = r.raw || '';
+      document.getElementById('brix').value = r.brix || '';
+      document.getElementById('ph').value = r.ph || '';
+      document.getElementById('result').value = r.result;
+      document.getElementById('prod').value = r.prod || '';
+      document.getElementById('notes').value = r.notes;
+      
+      images = JSON.parse(JSON.stringify(r.images || { recvPreview: [], qcPreview: [], prodPreview: [], palletPreview: [] }));
+      
+      ['recvPreview', 'qcPreview', 'prodPreview', 'palletPreview'].forEach(target => {
+        const box = document.getElementById(target);
+        box.innerHTML = '';
+        (images[target] || []).forEach(src => {
+          const im = document.createElement('img');
+          im.src = src;
+          box.appendChild(im);
+        });
+      });
+      
+      document.getElementById('formTitle').textContent = 'تعديل التقرير - ' + id;
+      document.getElementById('saveBtn').textContent = 'حفظ التعديلات';
+      document.getElementById('new').classList.add('edit-mode');
+      
+      show('new');
+      window.scrollTo(0, 0);
+    }
+
+    function cancelEdit() {
+      editingReportId = null;
+      resetForm();
+      show('search');
+    }
+
+    function deleteReport(id) {
+      if (!confirm('هل أنت متأكد من حذف هذا التقرير؟')) return;
+      
+      currentUser.reports = getCurrentReports().filter(r => r.id !== id);
+      saveCurrentUserProfile();
+      alert('تم حذف التقرير بنجاح');
+      searchReports();
     }
 
     function saveReport() {
@@ -379,26 +440,51 @@
         alert('من فضلك أدخل المورد وBatch والكمية المستلمة.');
         return;
       }
-      const id = 'DR-' + new Date().getFullYear() + '-' + String((getCurrentReports().length || 0) + 1).padStart(5, '0');
-      const newReport = {
-        id,
-        date: val('date') || new Date().toISOString().slice(0, 10),
-        time: now(),
-        shift: val('shift'),
-        supplier: val('supplier').trim(),
-        batch: val('batch').trim(),
-        pallet: val('pallet').trim(),
-        raw: Number(val('raw')) || 0,
-        brix: val('brix') ? Number(val('brix')) : null,
-        ph: val('ph') ? Number(val('ph')) : null,
-        result: val('result'),
-        prod: Number(val('prod')) || 0,
-        notes: val('notes').trim(),
-        images: JSON.parse(JSON.stringify(images))
-      };
-      currentUser.reports = [newReport, ...getCurrentReports()];
+
+      if (editingReportId) {
+        const idx = currentUser.reports.findIndex(r => r.id === editingReportId);
+        if (idx >= 0) {
+          currentUser.reports[idx] = {
+            id: editingReportId,
+            date: val('date'),
+            time: now(),
+            shift: val('shift'),
+            supplier: val('supplier').trim(),
+            batch: val('batch').trim(),
+            pallet: val('pallet').trim(),
+            raw: Number(val('raw')) || 0,
+            brix: val('brix') ? Number(val('brix')) : null,
+            ph: val('ph') ? Number(val('ph')) : null,
+            result: val('result'),
+            prod: Number(val('prod')) || 0,
+            notes: val('notes').trim(),
+            images: JSON.parse(JSON.stringify(images))
+          };
+        }
+        alert('تم تحديث التقرير بنجاح');
+        editingReportId = null;
+      } else {
+        const id = 'DR-' + new Date().getFullYear() + '-' + String((getCurrentReports().length || 0) + 1).padStart(5, '0');
+        const newReport = {
+          id,
+          date: val('date') || new Date().toISOString().slice(0, 10),
+          time: now(),
+          shift: val('shift'),
+          supplier: val('supplier').trim(),
+          batch: val('batch').trim(),
+          pallet: val('pallet').trim(),
+          raw: Number(val('raw')) || 0,
+          brix: val('brix') ? Number(val('brix')) : null,
+          ph: val('ph') ? Number(val('ph')) : null,
+          result: val('result'),
+          prod: Number(val('prod')) || 0,
+          notes: val('notes').trim(),
+          images: JSON.parse(JSON.stringify(images))
+        };
+        currentUser.reports = [newReport, ...getCurrentReports()];
+      }
+      
       saveCurrentUserProfile();
-      alert('تم حفظ التقرير بنجاح — ' + id);
       resetForm();
       renderDashboard();
     }
@@ -443,7 +529,7 @@
       const r = getCurrentReports().find(x => x.id === id);
       if (!r) return;
       const imgs = Object.values(r.images || {}).flat().map(x => '<img src="' + x + '" style="max-width:180px;max-height:160px;border-radius:8px;margin:5px">').join('');
-      document.getElementById('results').innerHTML = '<button class="btn secondary" type="button" onclick="searchReports()">← رجوع</button> <button class="btn primary" type="button" onclick="printReport(\'' + r.id + '\')">حفظ كـ PDF</button><div class="card report-detail"><h2>' + r.id + '</h2><div class="grid"><div><b>التاريخ</b><br>' + r.date + '</div><div><b>الشفت</b><br>' + (r.shift || '—') + '</div><div><b>المورد</b><br>' + (r.supplier || '—') + '</div><div><b>Batch</b><br>' + (r.batch || '—') + '</div><div><b>البالتة</b><br>' + (r.pallet || '—') + '</div><div><b>المستلم</b><br>' + Number(r.raw || 0).toLocaleString() + ' كجم</div><div><b>Brix</b><br>' + (r.brix != null ? r.brix : '—') + '</div><div><b>PH</b><br>' + (r.ph != null ? r.ph : '—') + '</div><div><b>نتيجة الفحص</b><br>' + (r.result || '—') + '</div><div><b>الإنتاج</b><br>' + Number(r.prod || 0).toLocaleString() + ' كجم</div></div><hr><b>الصور</b><div>' + (imgs || '<p class="muted">لا توجد صور محفوظة.</p>') + '</div><hr><b>الملاحظات</b><p>' + (r.notes || '—') + '</p></div>';
+      document.getElementById('results').innerHTML = '<button class="btn secondary" type="button" onclick="searchReports()">← رجوع</button> <button class="btn primary" type="button" onclick="editReport(\'' + r.id + '\')">✏️ تعديل</button> <button class="btn danger" type="button" onclick="deleteReport(\'' + r.id + '\')">🗑️ حذف</button> <button class="btn primary" type="button" onclick="printReport(\'' + r.id + '\')">حفظ كـ PDF</button><div class="card report-detail"><h2>' + r.id + '</h2><div class="grid"><div><b>التاريخ</b><br>' + r.date + '</div><div><b>الشفت</b><br>' + (r.shift || '—') + '</div><div><b>المورد</b><br>' + (r.supplier || '—') + '</div><div><b>Batch</b><br>' + (r.batch || '—') + '</div><div><b>البالتة</b><br>' + (r.pallet || '—') + '</div><div><b>المستلم</b><br>' + Number(r.raw || 0).toLocaleString() + ' كجم</div><div><b>Brix</b><br>' + (r.brix != null ? r.brix : '—') + '</div><div><b>PH</b><br>' + (r.ph != null ? r.ph : '—') + '</div><div><b>نتيجة الفحص</b><br>' + (r.result || '—') + '</div><div><b>الإنتاج</b><br>' + Number(r.prod || 0).toLocaleString() + ' كجم</div></div><hr><b>الصور</b><div>' + (imgs || '<p class="muted">لا توجد صور محفوظة.</p>') + '</div><hr><b>الملاحظات</b><p>' + (r.notes || '—') + '</p></div>';
     }
 
     function printReport(id) {
