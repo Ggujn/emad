@@ -18,7 +18,7 @@
     }
     *{box-sizing:border-box}
     html,body{margin:0;font-family:Tahoma,Arial,sans-serif;background:var(--light);color:var(--text)}
-    body{min-height:100vh}
+    body{min-height:100vh;display:flex;flex-direction:column}
     button,input,select,textarea{font:inherit}
     .hidden{display:none !important}
     .auth-shell{min-height:100vh;display:grid;place-items:center;padding:24px;background:linear-gradient(135deg,#edf6f2,#f4f6f8)}
@@ -38,7 +38,9 @@
     header h1{margin:0;font-size:22px}
     .header-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
     .user-badge{display:inline-block;padding:8px 12px;background:rgba(255,255,255,0.1);border-radius:999px;font-size:13px}
-    .wrap{max-width:1200px;margin:24px auto;padding:0 16px}
+    .copyright{text-align:center;font-size:12px;color:#fff;opacity:0.9}
+    .app-container{flex:1;display:flex;flex-direction:column}
+    .wrap{max-width:1200px;margin:24px auto;padding:0 16px;flex:1;width:100%}
     .nav{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
     .nav button{border:none;border-radius:9px;padding:11px 16px;background:#fff;cursor:pointer;font-weight:bold}
     .nav button.active{background:var(--green);color:#fff}
@@ -60,49 +62,62 @@
     .edit-mode .hidden-in-edit{display:none !important}
     .edit-mode .show-in-edit{display:block !important}
     .show-in-edit{display:none !important}
+    footer{background:var(--green);color:#fff;padding:16px 24px;text-align:center;margin-top:auto;border-top:1px solid rgba(255,255,255,0.1)}
+    .footer-text{font-size:13px;margin:0}
+    .footer-copyright{font-size:12px;opacity:0.9;margin-top:4px}
     @media(max-width:850px){.grid,.stats,.photo-grid{grid-template-columns:repeat(2,1fr)}}
     @media(max-width:520px){.grid,.stats,.photo-grid{grid-template-columns:1fr};header{flex-direction:column;align-items:flex-start}}
   </style>
 </head>
 <body>
   <div id="authView">
-    <div class="auth-card">
-      <div class="auth-tabs">
-        <button class="tab active" data-auth="login" type="button">تسجيل دخول</button>
-        <button class="tab" data-auth="signup" type="button">إنشاء حساب</button>
+    <div class="auth-shell">
+      <div>
+        <div class="auth-card">
+          <div class="auth-tabs">
+            <button class="tab active" data-auth="login" type="button">تسجيل دخول</button>
+            <button class="tab" data-auth="signup" type="button">إنشاء حساب</button>
+          </div>
+
+          <form id="loginForm">
+            <div class="field">
+              <label>اسم المستخدم</label>
+              <input id="loginUser" placeholder="اكتب اسم المستخدم" required>
+            </div>
+            <div class="field">
+              <label>كلمة المرور</label>
+              <input id="loginPass" type="password" placeholder="اكتب كلمة المرور" required>
+            </div>
+            <button type="submit" class="btn primary" style="width:100%">دخول</button>
+          </form>
+
+          <form id="signupForm" class="hidden">
+            <div class="field">
+              <label>اسم المستخدم</label>
+              <input id="signupUser" placeholder="اسم مستخدم جديد" required>
+            </div>
+            <div class="field">
+              <label>كلمة المرور</label>
+              <input id="signupPass" type="password" placeholder="كلمة المرور" required>
+            </div>
+            <button type="submit" class="btn primary" style="width:100%">إنشاء الحساب</button>
+          </form>
+
+          <div id="authMessage" class="message hidden"></div>
+        </div>
+        <div style="text-align:center;margin-top:24px;color:var(--text)">
+          <p class="footer-copyright">© جميع الحقوق محفوظة لـ عماد العربي</p>
+        </div>
       </div>
-
-      <form id="loginForm">
-        <div class="field">
-          <label>اسم المستخدم</label>
-          <input id="loginUser" placeholder="اكتب اسم المستخدم" required>
-        </div>
-        <div class="field">
-          <label>كلمة المرور</label>
-          <input id="loginPass" type="password" placeholder="اكتب كلمة المرور" required>
-        </div>
-        <button type="submit" class="btn primary" style="width:100%">دخول</button>
-      </form>
-
-      <form id="signupForm" class="hidden">
-        <div class="field">
-          <label>اسم المستخدم</label>
-          <input id="signupUser" placeholder="اسم مستخدم جديد" required>
-        </div>
-        <div class="field">
-          <label>كلمة المرور</label>
-          <input id="signupPass" type="password" placeholder="كلمة المرور" required>
-        </div>
-        <button type="submit" class="btn primary" style="width:100%">إنشاء الحساب</button>
-      </form>
-
-      <div id="authMessage" class="message hidden"></div>
     </div>
   </div>
 
-  <div id="appView" class="hidden">
+  <div id="appView" class="hidden" style="display:flex;flex-direction:column;min-height:100vh">
     <header>
-      <h1>نظام التقرير اليومي — تصنيع الفراولة IQF</h1>
+      <div>
+        <h1>نظام التقرير اليومي — تصنيع الفراولة IQF</h1>
+        <div class="copyright">© عماد العربي</div>
+      </div>
       <div class="header-actions">
         <span id="userBadge" class="user-badge"></span>
         <button class="btn secondary" id="logoutBtn" type="button">تسجيل الخروج</button>
@@ -110,85 +125,92 @@
       </div>
     </header>
 
-    <div class="wrap">
-      <div class="nav">
-        <button class="active" type="button" data-target="dashboard">الرئيسية</button>
-        <button type="button" data-target="new">إنشاء تقرير</button>
-        <button type="button" data-target="search">البحث والأرشيف</button>
+    <div class="app-container">
+      <div class="wrap">
+        <div class="nav">
+          <button class="active" type="button" data-target="dashboard">الرئيسية</button>
+          <button type="button" data-target="new">إنشاء تقرير</button>
+          <button type="button" data-target="search">البحث والأرشيف</button>
+        </div>
+
+        <section id="dashboard">
+          <div class="card">
+            <h2>ملخص اليوم</h2>
+            <div class="stats">
+              <div class="stat">تقارير اليوم<b id="sReports">0</b></div>
+              <div class="stat">إجمالي الخام<b id="sRaw">0 كجم</b></div>
+              <div class="stat">إجمالي الإنتاج<b id="sProd">0 كجم</b></div>
+              <div class="stat">متوسط Brix<b id="sBrix">—</b></div>
+            </div>
+          </div>
+          <div class="card">
+            <h2>آخر التقارير</h2>
+            <div id="latest"></div>
+          </div>
+        </section>
+
+        <section id="new" class="hidden">
+          <div class="card">
+            <h2 id="formTitle">بيانات التقرير</h2>
+            <div class="grid">
+              <div><label>التاريخ</label><input id="date" type="date"></div>
+              <div><label>الشفت</label><select id="shift"><option>صباحي</option><option>مسائي</option><option>ليلي</option></select></div>
+              <div><label>المورد</label><input id="supplier"></div>
+              <div><label>Batch</label><input id="batch"></div>
+              <div><label>رقم البالتة</label><input id="pallet"></div>
+              <div><label>الكمية المستلمة (كجم)</label><input id="raw" type="number" min="0"></div>
+              <div><label>Brix</label><input id="brix" type="number" step="0.1"></div>
+              <div><label>PH</label><input id="ph" type="number" step="0.1"></div>
+              <div><label>نتيجة الفحص</label><select id="result"><option>مقبول</option><option>مقبول مع ملاحظات</option><option>مرفوض</option></select></div>
+              <div><label>الإنتاج (كجم)</label><input id="prod" type="number" min="0"></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>صور التقرير</h2>
+            <div class="photo-grid">
+              <div class="photo"><b>صور المنتج المستلم</b><p><input type="file" accept="image/*" capture="environment" multiple onchange="preview(this,'recvPreview')"></p><div id="recvPreview"></div></div>
+              <div class="photo"><b>صور الجودة / الفحص</b><p><input type="file" accept="image/*" capture="environment" multiple onchange="preview(this,'qcPreview')"></p><div id="qcPreview"></div></div>
+              <div class="photo"><b>صور الإنتاج</b><p><input type="file" accept="image/*" capture="environment" multiple onchange="preview(this,'prodPreview')"></p><div id="prodPreview"></div></div>
+              <div class="photo"><b>صور البالتة</b><p><input type="file" accept="image/*" capture="environment" multiple onchange="preview(this,'palletPreview')"></p><div id="palletPreview"></div></div>
+            </div>
+            <p class="muted">تاريخ تجريبي: الصور تُحفظ داخل حساب المستخدم الحالي فقط داخل المتصفح.</p>
+          </div>
+
+          <div class="card">
+            <h2>ملاحظات</h2>
+            <textarea id="notes" placeholder="اكتب أي ملاحظات على الاستلام أو الفحص أو الإنتاج..."></textarea>
+            <br><br>
+            <div class="actions">
+              <button class="btn primary" type="button" id="saveBtn" onclick="saveReport()">حفظ التقرير</button>
+              <button class="btn secondary" type="button" onclick="resetForm()">مسح</button>
+              <button class="btn secondary show-in-edit" type="button" onclick="cancelEdit()">إلغاء التعديل</button>
+            </div>
+          </div>
+        </section>
+
+        <section id="search" class="hidden">
+          <div class="card">
+            <h2>البحث في التقارير</h2>
+            <div class="grid">
+              <div><label>رقم التقرير</label><input id="qId"></div>
+              <div><label>التاريخ</label><input id="qDate" type="date"></div>
+              <div><label>المورد</label><input id="qSupplier"></div>
+              <div><label>Batch</label><input id="qBatch"></div>
+              <div><label>البالتة</label><input id="qPallet"></div>
+              <div><label>نتيجة الفحص</label><select id="qResult"><option value="">الكل</option><option>مقبول</option><option>مقبول مع ملاحظات</option><option>مرفوض</option></select></div>
+            </div><br>
+            <button class="btn primary" type="button" onclick="searchReports()">بحث</button>
+          </div>
+          <div class="card"><div id="results"></div></div>
+        </section>
       </div>
-
-      <section id="dashboard">
-        <div class="card">
-          <h2>ملخص اليوم</h2>
-          <div class="stats">
-            <div class="stat">تقارير اليوم<b id="sReports">0</b></div>
-            <div class="stat">إجمالي الخام<b id="sRaw">0 كجم</b></div>
-            <div class="stat">إجمالي الإنتاج<b id="sProd">0 كجم</b></div>
-            <div class="stat">متوسط Brix<b id="sBrix">—</b></div>
-          </div>
-        </div>
-        <div class="card">
-          <h2>آخر التقارير</h2>
-          <div id="latest"></div>
-        </div>
-      </section>
-
-      <section id="new" class="hidden">
-        <div class="card">
-          <h2 id="formTitle">بيانات التقرير</h2>
-          <div class="grid">
-            <div><label>التاريخ</label><input id="date" type="date"></div>
-            <div><label>الشفت</label><select id="shift"><option>صباحي</option><option>مسائي</option><option>ليلي</option></select></div>
-            <div><label>المورد</label><input id="supplier"></div>
-            <div><label>Batch</label><input id="batch"></div>
-            <div><label>رقم البالتة</label><input id="pallet"></div>
-            <div><label>الكمية المستلمة (كجم)</label><input id="raw" type="number" min="0"></div>
-            <div><label>Brix</label><input id="brix" type="number" step="0.1"></div>
-            <div><label>PH</label><input id="ph" type="number" step="0.1"></div>
-            <div><label>نتيجة الفحص</label><select id="result"><option>مقبول</option><option>مقبول مع ملاحظات</option><option>مرفوض</option></select></div>
-            <div><label>الإنتاج (كجم)</label><input id="prod" type="number" min="0"></div>
-          </div>
-        </div>
-
-        <div class="card">
-          <h2>صور التقرير</h2>
-          <div class="photo-grid">
-            <div class="photo"><b>صور المنتج المستلم</b><p><input type="file" accept="image/*" capture="environment" multiple onchange="preview(this,'recvPreview')"></p><div id="recvPreview"></div></div>
-            <div class="photo"><b>صور الجودة / الفحص</b><p><input type="file" accept="image/*" capture="environment" multiple onchange="preview(this,'qcPreview')"></p><div id="qcPreview"></div></div>
-            <div class="photo"><b>صور الإنتاج</b><p><input type="file" accept="image/*" capture="environment" multiple onchange="preview(this,'prodPreview')"></p><div id="prodPreview"></div></div>
-            <div class="photo"><b>صور البالتة</b><p><input type="file" accept="image/*" capture="environment" multiple onchange="preview(this,'palletPreview')"></p><div id="palletPreview"></div></div>
-          </div>
-          <p class="muted">تاريخ تجريبي: الصور تُحفظ داخل حساب المستخدم الحالي فقط داخل المتصفح.</p>
-        </div>
-
-        <div class="card">
-          <h2>ملاحظات</h2>
-          <textarea id="notes" placeholder="اكتب أي ملاحظات على الاستلام أو الفحص أو الإنتاج..."></textarea>
-          <br><br>
-          <div class="actions">
-            <button class="btn primary" type="button" id="saveBtn" onclick="saveReport()">حفظ التقرير</button>
-            <button class="btn secondary" type="button" onclick="resetForm()">مسح</button>
-            <button class="btn secondary show-in-edit" type="button" onclick="cancelEdit()">إلغاء التعديل</button>
-          </div>
-        </div>
-      </section>
-
-      <section id="search" class="hidden">
-        <div class="card">
-          <h2>البحث في التقارير</h2>
-          <div class="grid">
-            <div><label>رقم التقرير</label><input id="qId"></div>
-            <div><label>التاريخ</label><input id="qDate" type="date"></div>
-            <div><label>المورد</label><input id="qSupplier"></div>
-            <div><label>Batch</label><input id="qBatch"></div>
-            <div><label>البالتة</label><input id="qPallet"></div>
-            <div><label>نتيجة الفحص</label><select id="qResult"><option value="">الكل</option><option>مقبول</option><option>مقبول مع ملاحظات</option><option>مرفوض</option></select></div>
-          </div><br>
-          <button class="btn primary" type="button" onclick="searchReports()">بحث</button>
-        </div>
-        <div class="card"><div id="results"></div></div>
-      </section>
     </div>
+
+    <footer>
+      <p class="footer-text">نظام التقرير اليومي لتصنيع الفراولة IQF</p>
+      <p class="footer-copyright">© جميع الحقوق محفوظة لـ <strong>عماد العربي</strong></p>
+    </footer>
   </div>
 
   <script>
@@ -536,7 +558,7 @@
       const r = getCurrentReports().find(x => x.id === id);
       if (!r) return;
       const imgsHtml = Object.values(r.images || {}).flat().map(src => '<img src="' + src + '" style="max-width:260px;max-height:220px;border-radius:8px;margin:6px">').join('');
-      const html = '<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>' + r.id + '</title><style>body{font-family:Tahoma,Arial,sans-serif;padding:20px;color:#17212b}h1{background:#173f35;color:#fff;padding:10px;border-radius:8px}img{display:inline-block}div{margin:8px 0}</style></head><body><h1>تقرير ' + r.id + '</h1><div><b>التاريخ:</b> ' + r.date + ' &nbsp; <b>الشفت:</b> ' + (r.shift || '—') + '</div><div><b>المورد:</b> ' + (r.supplier || '—') + '</div><div><b>Batch:</b> ' + (r.batch || '—') + '</div><div><b>البالتة:</b> ' + (r.pallet || '—') + '</div><div><b>المستلم:</b> ' + Number(r.raw || 0).toLocaleString() + ' كجم</div><div><b>Brix:</b> ' + (r.brix != null ? r.brix : '—') + '</div><div><b>PH:</b> ' + (r.ph != null ? r.ph : '—') + '</div><div><b>نتيجة الفحص:</b> ' + (r.result || '—') + '</div><div><b>الإنتاج:</b> ' + Number(r.prod || 0).toLocaleString() + ' كجم</div><hr><h2>الصور</h2><div>' + (imgsHtml || '<p>لا توجد صور</p>') + '</div><hr><h2>الملاحظات</h2><div>' + (r.notes || '—') + '</div></body></html>';
+      const html = '<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>' + r.id + '</title><style>body{font-family:Tahoma,Arial,sans-serif;padding:20px;color:#17212b}h1{background:#173f35;color:#fff;padding:10px;border-radius:8px}img{display:inline-block}div{margin:8px 0}.copyright{text-align:center;font-size:12px;color:#173f35;margin-top:20px}</style></head><body><h1>تقرير ' + r.id + '</h1><div><b>التاريخ:</b> ' + r.date + ' &nbsp; <b>الشفت:</b> ' + (r.shift || '—') + '</div><div><b>المورد:</b> ' + (r.supplier || '—') + '</div><div><b>Batch:</b> ' + (r.batch || '—') + '</div><div><b>البالتة:</b> ' + (r.pallet || '—') + '</div><div><b>المستلم:</b> ' + Number(r.raw || 0).toLocaleString() + ' كجم</div><div><b>Brix:</b> ' + (r.brix != null ? r.brix : '—') + '</div><div><b>PH:</b> ' + (r.ph != null ? r.ph : '—') + '</div><div><b>نتيجة الفحص:</b> ' + (r.result || '—') + '</div><div><b>الإنتاج:</b> ' + Number(r.prod || 0).toLocaleString() + ' كجم</div><hr><h2>الصور</h2><div>' + (imgsHtml || '<p>لا توجد صور</p>') + '</div><hr><h2>الملاحظات</h2><div>' + (r.notes || '—') + '</div><div class="copyright"><strong>© جميع الحقوق محفوظة لـ عماد العربي</strong></div></body></html>';
       const w = window.open('', '_blank');
       w.document.write(html);
       w.document.close();
@@ -553,7 +575,7 @@
         const imgs = Object.values(r.images || {}).flat().map(src => '<img src="' + src + '" style="max-width:160px;max-height:120px;border-radius:6px;margin:4px">').join('');
         return '<section style="margin-bottom:18px"><h2>' + r.id + ' — ' + r.date + '</h2><div><b>المورد:</b> ' + (r.supplier || '—') + ' &nbsp; <b>Batch:</b> ' + (r.batch || '—') + '</div><div><b>المستلم:</b> ' + Number(r.raw || 0).toLocaleString() + ' كجم &nbsp; <b>الإنتاج:</b> ' + Number(r.prod || 0).toLocaleString() + ' كجم</div><div>' + (imgs || '') + '</div><hr></section>';
       }).join('');
-      const html = '<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>كل تقارير المستخدم</title><style>body{font-family:Tahoma,Arial,sans-serif;padding:20px;color:#17212b}h1{background:#173f35;color:#fff;padding:10px;border-radius:8px}</style></head><body><h1>تصدير جميع تقارير ' + currentUser.username + '</h1>' + parts + '</body></html>';
+      const html = '<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>كل تقارير المستخدم</title><style>body{font-family:Tahoma,Arial,sans-serif;padding:20px;color:#17212b}h1{background:#173f35;color:#fff;padding:10px;border-radius:8px}.copyright{text-align:center;font-size:12px;color:#173f35;margin-top:20px}</style></head><body><h1>تصدير جميع تقارير ' + currentUser.username + '</h1>' + parts + '<div class="copyright"><strong>© جميع الحقوق محفوظة لـ عماد العربي</strong></div></body></html>';
       const w = window.open('', '_blank');
       w.document.write(html);
       w.document.close();
