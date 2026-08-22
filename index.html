@@ -29,6 +29,9 @@
     label{display:block;font-size:13px;font-weight:bold;margin-bottom:6px}
     input,select,textarea{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:14px}
     textarea{min-height:100px;resize:vertical}
+    input.error,select.error,textarea.error{border-color:var(--danger);background:#fef1f0}
+    .error-message{display:none;color:var(--danger);font-size:12px;margin-top:4px}
+    .error-message.show{display:block}
     .btn{border:none;border-radius:10px;padding:11px 16px;font-weight:bold;cursor:pointer}
     .btn.primary{background:var(--green);color:#fff}
     .btn.secondary{background:#edf0f2;color:var(--text)}
@@ -52,7 +55,10 @@
     .actions{display:flex;gap:10px;flex-wrap:wrap}
     .photo-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
     .photo{border:2px dashed #cbd5d1;border-radius:10px;padding:12px;min-height:130px;background:#fafbfc}
-    .photo img{max-width:100%;max-height:150px;border-radius:8px;display:block;margin-top:8px}
+    .photo-container{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+    .photo-item{position:relative;display:inline-block}
+    .photo img{max-width:100%;max-height:150px;border-radius:8px;display:block}
+    .photo-remove{position:absolute;top:-8px;right:-8px;background:var(--danger);color:#fff;border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:16px}
     .photo b{display:block;margin-bottom:8px}
     table{width:100%;border-collapse:collapse}th,td{padding:10px;border-bottom:1px solid #e5e7e9;text-align:right;font-size:13px}th{background:#f5f7f7}
     .tag{display:inline-block;background:#e7f1ed;padding:5px 9px;border-radius:20px;font-size:12px}
@@ -153,33 +159,98 @@
           <div class="card">
             <h2 id="formTitle">بيانات التقرير</h2>
             <div class="grid">
-              <div><label>التاريخ</label><input id="date" type="date"></div>
-              <div><label>الشفت</label><select id="shift"><option>صباحي</option><option>مسائي</option><option>ليلي</option></select></div>
-              <div><label>المورد</label><input id="supplier"></div>
-              <div><label>Batch</label><input id="batch"></div>
-              <div><label>رقم البالتة</label><input id="pallet"></div>
-              <div><label>الكمية المستلمة (كجم)</label><input id="raw" type="number" min="0"></div>
-              <div><label>Brix</label><input id="brix" type="number" step="0.1"></div>
-              <div><label>PH</label><input id="ph" type="number" step="0.1"></div>
-              <div><label>نتيجة الفحص</label><select id="result"><option>مقبول</option><option>مقبول مع ملاحظات</option><option>مرفوض</option></select></div>
-              <div><label>الإنتاج (كجم)</label><input id="prod" type="number" min="0"></div>
+              <div>
+                <label>التاريخ</label>
+                <input id="date" type="date" onchange="validateField('date')">
+                <div class="error-message" id="dateError"></div>
+              </div>
+              <div>
+                <label>الشفت</label>
+                <select id="shift" onchange="validateField('shift')">
+                  <option>صباحي</option>
+                  <option>مسائي</option>
+                  <option>ليلي</option>
+                </select>
+                <div class="error-message" id="shiftError"></div>
+              </div>
+              <div>
+                <label>المورد</label>
+                <input id="supplier" placeholder="أدخل اسم المورد" oninput="validateField('supplier')">
+                <div class="error-message" id="supplierError"></div>
+              </div>
+              <div>
+                <label>Batch</label>
+                <input id="batch" placeholder="أدخل رقم Batch" oninput="validateField('batch')">
+                <div class="error-message" id="batchError"></div>
+              </div>
+              <div>
+                <label>رقم البالتة</label>
+                <input id="pallet" placeholder="أدخل رقم البالتة" oninput="validateField('pallet')">
+                <div class="error-message" id="palletError"></div>
+              </div>
+              <div>
+                <label>الكمية المستلمة (كجم)</label>
+                <input id="raw" type="number" min="0" placeholder="0" oninput="validateField('raw')">
+                <div class="error-message" id="rawError"></div>
+              </div>
+              <div>
+                <label>Brix</label>
+                <input id="brix" type="number" step="0.1" placeholder="0.0" oninput="validateField('brix')">
+                <div class="error-message" id="brixError"></div>
+              </div>
+              <div>
+                <label>PH</label>
+                <input id="ph" type="number" step="0.1" placeholder="0.0" oninput="validateField('ph')">
+                <div class="error-message" id="phError"></div>
+              </div>
+              <div>
+                <label>نتيجة الفحص</label>
+                <select id="result" onchange="validateField('result')">
+                  <option>مقبول</option>
+                  <option>مقبول مع ملاحظات</option>
+                  <option>مرفوض</option>
+                </select>
+                <div class="error-message" id="resultError"></div>
+              </div>
+              <div>
+                <label>الإنتاج (كجم)</label>
+                <input id="prod" type="number" min="0" placeholder="0" oninput="validateField('prod')">
+                <div class="error-message" id="prodError"></div>
+              </div>
             </div>
           </div>
 
           <div class="card">
             <h2>صور التقرير</h2>
             <div class="photo-grid">
-              <div class="photo"><b>صور المنتج المستلم</b><p><input type="file" accept="image/*" capture="environment" multiple onchange="preview(this,'recvPreview')"></p><div id="recvPreview"></div></div>
-              <div class="photo"><b>صور الجودة / الفحص</b><p><input type="file" accept="image/*" capture="environment" multiple onchange="preview(this,'qcPreview')"></p><div id="qcPreview"></div></div>
-              <div class="photo"><b>صور الإنتاج</b><p><input type="file" accept="image/*" capture="environment" multiple onchange="preview(this,'prodPreview')"></p><div id="prodPreview"></div></div>
-              <div class="photo"><b>صور البالتة</b><p><input type="file" accept="image/*" capture="environment" multiple onchange="preview(this,'palletPreview')"></p><div id="palletPreview"></div></div>
+              <div class="photo">
+                <b>صور المنتج المستلم</b>
+                <p><input type="file" accept="image/*" capture="environment" multiple onchange="addPhotos(this,'recvPreview')"></p>
+                <div class="photo-container" id="recvPreview"></div>
+              </div>
+              <div class="photo">
+                <b>صور الجودة / الفحص</b>
+                <p><input type="file" accept="image/*" capture="environment" multiple onchange="addPhotos(this,'qcPreview')"></p>
+                <div class="photo-container" id="qcPreview"></div>
+              </div>
+              <div class="photo">
+                <b>صور الإنتاج</b>
+                <p><input type="file" accept="image/*" capture="environment" multiple onchange="addPhotos(this,'prodPreview')"></p>
+                <div class="photo-container" id="prodPreview"></div>
+              </div>
+              <div class="photo">
+                <b>صور البالتة</b>
+                <p><input type="file" accept="image/*" capture="environment" multiple onchange="addPhotos(this,'palletPreview')"></p>
+                <div class="photo-container" id="palletPreview"></div>
+              </div>
             </div>
             <p class="muted">تاريخ تجريبي: الصور تُحفظ داخل حساب المستخدم الحالي فقط داخل المتصفح.</p>
           </div>
 
           <div class="card">
             <h2>ملاحظات</h2>
-            <textarea id="notes" placeholder="اكتب أي ملاحظات على الاستلام أو الفحص أو الإنتاج..."></textarea>
+            <textarea id="notes" placeholder="اكتب أي ملاحظات على الاستلام أو الفحص أو الإنتاج..." oninput="validateField('notes')"></textarea>
+            <div class="error-message" id="notesError"></div>
             <br><br>
             <div class="actions">
               <button class="btn primary" type="button" id="saveBtn" onclick="saveReport()">حفظ التقرير</button>
@@ -219,6 +290,81 @@
     let currentUser = null;
     let images = { recvPreview: [], qcPreview: [], prodPreview: [], palletPreview: [] };
     let editingReportId = null;
+
+    const validationRules = {
+      supplier: { required: true, minLength: 2, message: 'المورد مطلوب ويجب أن يكون 2 أحرف على الأقل' },
+      batch: { required: true, minLength: 1, message: 'Batch مطلوب' },
+      raw: { required: true, min: 0, message: 'الكمية المستلمة مطلوبة ويجب أن تكون أكبر من 0' },
+      brix: { min: 0, max: 100, message: 'قيمة Brix يجب أن تكون بين 0 و 100' },
+      ph: { min: 0, max: 14, message: 'قيمة PH يجب أن تكون بين 0 و 14' },
+      prod: { min: 0, message: 'الإنتاج يجب أن يكون أكبر من أو يساوي 0' }
+    };
+
+    function validateField(fieldId) {
+      const field = document.getElementById(fieldId);
+      const errorEl = document.getElementById(fieldId + 'Error');
+      let isValid = true;
+      let errorMsg = '';
+
+      if (fieldId === 'date') {
+        if (!field.value) {
+          isValid = false;
+          errorMsg = 'التاريخ مطلوب';
+        }
+      } else if (fieldId === 'shift' || fieldId === 'result') {
+        if (!field.value) {
+          isValid = false;
+          errorMsg = 'هذا الحقل مطلوب';
+        }
+      } else if (validationRules[fieldId]) {
+        const rule = validationRules[fieldId];
+        const value = field.value.trim();
+
+        if (rule.required && !value) {
+          isValid = false;
+          errorMsg = rule.message;
+        } else if (rule.minLength && value.length < rule.minLength) {
+          isValid = false;
+          errorMsg = rule.message;
+        } else if (rule.min !== undefined && value) {
+          const num = parseFloat(value);
+          if (isNaN(num) || num < rule.min) {
+            isValid = false;
+            errorMsg = rule.message;
+          }
+        } else if (rule.max !== undefined && value) {
+          const num = parseFloat(value);
+          if (isNaN(num) || num > rule.max) {
+            isValid = false;
+            errorMsg = rule.message;
+          }
+        }
+      }
+
+      if (!isValid) {
+        field.classList.add('error');
+        errorEl.textContent = errorMsg;
+        errorEl.classList.add('show');
+      } else {
+        field.classList.remove('error');
+        errorEl.classList.remove('show');
+      }
+
+      return isValid;
+    }
+
+    function validateAllFields() {
+      const fields = ['date', 'supplier', 'batch', 'raw', 'brix', 'ph', 'prod'];
+      let allValid = true;
+
+      fields.forEach(field => {
+        if (!validateField(field)) {
+          allValid = false;
+        }
+      });
+
+      return allValid;
+    }
 
     function getUsers() {
       try {
@@ -369,20 +515,39 @@
       if (id === 'search') searchReports();
     }
 
-    function preview(input, target) {
-      images[target] = [];
-      const box = document.getElementById(target);
-      box.innerHTML = '';
-      [...input.files].forEach(file => {
+    function addPhotos(input, target) {
+      const files = [...input.files];
+      if (!files.length) return;
+
+      files.forEach(file => {
         const reader = new FileReader();
         reader.onload = e => {
           images[target].push(e.target.result);
-          const im = document.createElement('img');
-          im.src = e.target.result;
-          box.appendChild(im);
+          displayPhotos(target);
         };
         reader.readAsDataURL(file);
       });
+
+      input.value = '';
+    }
+
+    function displayPhotos(target) {
+      const box = document.getElementById(target);
+      box.innerHTML = '';
+      images[target].forEach((src, idx) => {
+        const item = document.createElement('div');
+        item.className = 'photo-item';
+        item.innerHTML = `
+          <img src="${src}" style="max-width:120px;max-height:120px;border-radius:8px">
+          <button type="button" class="photo-remove" onclick="removePhoto('${target}', ${idx})">✕</button>
+        `;
+        box.appendChild(item);
+      });
+    }
+
+    function removePhoto(target, idx) {
+      images[target].splice(idx, 1);
+      displayPhotos(target);
     }
 
     function val(id) {
@@ -392,6 +557,10 @@
     function resetForm() {
       ['supplier', 'batch', 'pallet', 'raw', 'brix', 'ph', 'prod', 'notes'].forEach(id => {
         document.getElementById(id).value = '';
+        document.getElementById(id).classList.remove('error');
+        if (document.getElementById(id + 'Error')) {
+          document.getElementById(id + 'Error').classList.remove('show');
+        }
       });
       ['recvPreview', 'qcPreview', 'prodPreview', 'palletPreview'].forEach(id => {
         document.getElementById(id).innerHTML = '';
@@ -424,13 +593,7 @@
       images = JSON.parse(JSON.stringify(r.images || { recvPreview: [], qcPreview: [], prodPreview: [], palletPreview: [] }));
       
       ['recvPreview', 'qcPreview', 'prodPreview', 'palletPreview'].forEach(target => {
-        const box = document.getElementById(target);
-        box.innerHTML = '';
-        (images[target] || []).forEach(src => {
-          const im = document.createElement('img');
-          im.src = src;
-          box.appendChild(im);
-        });
+        displayPhotos(target);
       });
       
       document.getElementById('formTitle').textContent = 'تعديل التقرير - ' + id;
@@ -457,9 +620,8 @@
     }
 
     function saveReport() {
-      if (!currentUser) return;
-      if (!val('supplier') || !val('batch') || !val('raw')) {
-        alert('من فضلك أدخل المورد وBatch والكمية المستلمة.');
+      if (!validateAllFields()) {
+        alert('يرجى تصحيح الأخطاء المحددة أعلاه');
         return;
       }
 
