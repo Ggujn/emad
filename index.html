@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>نظام التقرير اليومي - حسابات منفصلة</title>
+  <style>
+    :root {
+      --green:#173f35;
+      --green-soft:#eaf3ef;
+      --text:#17212b;
+      --muted:#6b7280;
+      --light:#f4f6f8;
+      --line:#dfe5e8;
+      --danger:#b42318;
+      --white:#fff;
+      --shadow:0 10px 25px rgba(23,63,53,0.08);
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;font-family:Tahoma,Arial,sans-serif;background:var(--light);color:var(--text)}
+    body{min-height:100vh}
+    button,input,select,textarea{font:inherit}
+    .hidden{display:none !important}
+    .auth-shell{min-height:100vh;display:grid;place-items:center;padding:24px;background:linear-gradient(135deg,#edf6f2,#f4f6f8)}
+    .auth-card{width:min(440px,100%);background:#fff;border-radius:18px;box-shadow:var(--shadow);padding:24px}
+    .auth-tabs{display:flex;gap:8px;margin-bottom:20px}
+    .auth-tabs button{flex:1;padding:12px;border:none;border-radius:10px;background:#edf0f2;font-weight:bold;cursor:pointer}.auth-tabs button.active{background:var(--green);color:#fff}
+    .field{margin-bottom:14px}
+    label{display:block;font-size:13px;font-weight:bold;margin-bottom:6px}
+    input,select,textarea{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:14px}
+    textarea{min-height:100px;resize:vertical}
+    .btn{border:none;border-radius:10px;padding:11px 16px;font-weight:bold;cursor:pointer}
+    .btn.primary{background:var(--green);color:#fff}
+    .btn.secondary{background:#edf0f2;color:var(--text)}
+    .btn.danger{background:var(--danger);color:#fff}
+    .message{margin-top:14px;border-radius:8px;padding:10px 12px;font-size:13px}.message.error{background:#fef1f0;color:#b42318}.message.success{background:#edf9f1;color:#176c3d}
+    header{background:var(--green);color:#fff;padding:18px 24px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+    header h1{margin:0;font-size:22px}
+    .header-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .user-badge{display:inline-block;padding:8px 12px;background:rgba(255,255,255,0.1);border-radius:999px;font-size:13px}
+    .wrap{max-width:1200px;margin:24px auto;padding:0 16px}
+    .nav{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+    .nav button{border:none;border-radius:9px;padding:11px 16px;background:#fff;cursor:pointer;font-weight:bold}
+    .nav button.active{background:var(--green);color:#fff}
+    .card{background:#fff;border-radius:14px;padding:20px;margin-bottom:16px;box-shadow:var(--shadow)}
+    .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+    .stat{padding:16px;border-radius:12px;background:var(--green-soft)}
+    .stat b{display:block;font-size:22px;margin-top:6px}
+    .actions{display:flex;gap:10px;flex-wrap:wrap}
+    .photo-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+    .photo{border:2px dashed #cbd5d1;border-radius:10px;padding:12px;min-height:130px;background:#fafbfc}
+    .photo img{max-width:100%;max-height:150px;border-radius:8px;display:block;margin-top:8px}
+    .photo b{display:block;margin-bottom:8px}
+    table{width:100%;border-collapse:collapse}th,td{padding:10px;border-bottom:1px solid #e5e7e9;text-align:right;font-size:13px}th{background:#f5f7f7}
+    .tag{display:inline-block;background:#e7f1ed;padding:5px 9px;border-radius:20px;font-size:12px}
+    .muted{color:var(--muted);font-size:12px}
+    .report-detail{padding:12px 0}
+    .report-detail div{margin-bottom:8px}
+    @media(max-width:850px){.grid,.stats,.photo-grid{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:520px){.grid,.stats,.photo-grid{grid-template-columns:1fr};header{flex-direction:column;align-items:flex-start}}
+  </style>
+</head>
+<body>
+  <div id="authView">
+    <div class="auth-card">
+      <div class="auth-tabs">
+        <button class="tab active" data-auth="login" type="button">تسجيل دخول</button>
+        <button class="tab" data-auth="signup" type="button">إنشاء حساب</button>
+      </div>
+
+      <form id="loginForm">
+        <div class="field">
+          <label>اسم المستخدم</label>
+          <input id="loginUser" placeholder="اكتب اسم المستخدم" required>
+        </div>
+        <div class="field">
+          <label>كلمة المرور</label>
+          <input id="loginPass" type="password" placeholder="اكتب كلمة المرور" required>
+        </div>
+        <button type="submit" class="btn primary" style="width:100%">دخول</button>
+      </form>
+
+      <form id="signupForm" class="hidden">
+        <div class="field">
+          <label>اسم المستخدم</label>
+          <input id="signupUser" placeholder="اسم مستخدم جديد" required>
+        </div>
+        <div class="field">
+          <label>كلمة المرور</label>
+          <input id="signupPass" type="password" placeholder="كلمة المرور" required>
+        </div>
+        <button type="submit" class="btn primary" style="width:100%">إنشاء الحساب</button>
+      </form>
+
+      <div id="authMessage" class="message hidden"></div>
+    </div>
+  </div>
+
+  <div id="appView" class="hidden">
+    <header>
+      <h1>نظام التقرير اليومي — تصنيع الفراولة IQF</h1>
+      <div class="header-actions">
+        <span id="userBadge" class="user-badge"></span>
+        <button class="btn secondary" id="logoutBtn" type="button">تسجيل الخروج</button>
+        <button class="btn secondary" id="exportAllBtn" type="button">حفظ الكل كـ PDF</button>
+      </div>
+    </header>
+
+    <div class="wrap">
+      <div class="nav">
+        <button class="active" type="button" data-target="dashboard">الرئيسية</button>
+        <button type="button" data-target="new">إنشاء تقرير</button>
+        <button type="button" data-target="search">البحث والأرشيف</button>
+      </div>
+
+      <section id="dashboard">
+        <div class="card">
+          <h2>ملخص اليوم</h2>
+          <div class="stats">
+            <div class="stat">تقارير اليوم<b id="sReports">0</b></div>
+            <div class="stat">إجمالي الخام<b id="sRaw">0 كجم</b></div>
+            <div class="stat">إجمالي الإنتاج<b id="sProd">0 كجم</b></div>
+            <div class="stat">متوسط Brix<b id="sBrix">—</b></div>
+          </div>
+        </div>
+        <div class="card">
+          <h2>آخر التقارير</h2>
+          <div id="latest"></div>
+        </div>
+      </section>
+
+      <section id="new" class="hidden">
+        <div class="card">
+          <h2>بيانات التقرير</h2>
+          <div class="grid">
+            <div><label>التاريخ</label><input id="date" type="date"></div>
+            <div><label>الشفت</label><select id="shift"><option>صباحي</option><option>مسائي</option><option>ليلي</option></select></div>
+            <div><label>المورد</label><input id="supplier"></div>
+            <div><label>Batch</label><input id="batch"></div>
+            <div><label>رقم البالتة</label><input id="pallet"></div>
+            <div><label>الكمية المستلمة (كجم)</label><input id="raw" type="number" min="0"></div>
+            <div><label>Brix</label><input id="brix" type="number" step="0.1"></div>
+            <div><label>PH</label><input id="ph" type="number" step="0.1"></div>
+            <div><label>نتيجة الفحص</label><select id="result"><option>مقبول</option><option>مقبول مع ملاحظات</option><option>مرفوض</option></select></div>
+            <div><label>الإنتاج (كجم)</label><input id="prod" type="number" min="0"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>صور التقرير</h2>
+          <div class="photo-grid">
+            <div class="photo"><b>صور المنتج المستلم</b><p><input type="file" accept="image/*" capture="environment" multiple onchange="preview(this,'recvPreview')"></p><div id="recvPreview"></div></div>
+            <div class="photo"><b>صور الجودة / الفحص</b><p><input type="file" accept="image/*" capture="environment" multiple onchange="preview(this,'qcPreview')"></p><div id="qcPreview"></div></div>
+            <div class="photo"><b>صور الإنتاج</b><p><input type="file" accept="image/*" capture="environment" multiple onchange="preview(this,'prodPreview')"></p><div id="prodPreview"></div></div>
+            <div class="photo"><b>صور البالتة</b><p><input type="file" accept="image/*" capture="environment" multiple onchange="preview(this,'palletPreview')"></p><div id="palletPreview"></div></div>
+          </div>
+          <p class="muted">تاريخ تجريبي: الصور تُحفظ داخل حساب المستخدم الحالي فقط داخل المتصفح.</p>
+        </div>
+
+        <div class="card">
+          <h2>ملاحظات</h2>
+          <textarea id="notes" placeholder="اكتب أي ملاحظات على الاستلام أو الفحص أو الإنتاج..."></textarea>
+          <br><br>
+          <div class="actions">
+            <button class="btn primary" type="button" onclick="saveReport()">حفظ التقرير</button>
+            <button class="btn secondary" type="button" onclick="resetForm()">مسح</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="search" class="hidden">
+        <div class="card">
+          <h2>البحث في التقارير</h2>
+          <div class="grid">
+            <div><label>رقم التقرير</label><input id="qId"></div>
+            <div><label>التاريخ</label><input id="qDate" type="date"></div>
+            <div><label>المورد</label><input id="qSupplier"></div>
+            <div><label>Batch</label><input id="qBatch"></div>
+            <div><label>البالتة</label><input id="qPallet"></div>
+            <div><label>نتيجة الفحص</label><select id="qResult"><option value="">الكل</option><option>مقبول</option><option>مقبول مع ملاحظات</option><option>مرفوض</option></select></div>
+          </div><br>
+          <button class="btn primary" type="button" onclick="searchReports()">بحث</button>
+        </div>
+        <div class="card"><div id="results"></div></div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const USERS_KEY = 'strawberry_users_v1';
+    const CURRENT_USER_KEY = 'strawberry_current_user_v1';
+    let currentUser = null;
+    let images = { recvPreview: [], qcPreview: [], prodPreview: [], palletPreview: [] };
+
+    function getUsers() {
+      try {
+        return JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveUsers(users) {
+      localStorage.setItem(USERS_KEY, JSON.stringify(users));
+    }
+
+    function loadCurrentUser() {
+      const userId = localStorage.getItem(CURRENT_USER_KEY);
+      const users = getUsers();
+      currentUser = users.find(u => u.id === userId) || null;
+      return currentUser;
+    }
+
+    function persistCurrentUser() {
+      if (currentUser) {
+        localStorage.setItem(CURRENT_USER_KEY, currentUser.id);
+      } else {
+        localStorage.removeItem(CURRENT_USER_KEY);
+      }
+    }
+
+    function showAuthTab(tab) {
+      document.querySelectorAll('.tab').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.auth === tab);
+      });
+      document.getElementById('loginForm').classList.toggle('hidden', tab !== 'login');
+      document.getElementById('signupForm').classList.toggle('hidden', tab !== 'signup');
+    }
+
+    function showMessage(text, type = 'error') {
+      const box = document.getElementById('authMessage');
+      box.textContent = text;
+      box.className = 'message ' + type;
+      box.classList.remove('hidden');
+    }
+
+    function hideMessage() {
+      document.getElementById('authMessage').classList.add('hidden');
+    }
+
+    function hashPassword(password) {
+      return btoa(unescape(encodeURIComponent(password)));
+    }
+
+    function setAppView() {
+      const appView = document.getElementById('appView');
+      const authView = document.getElementById('authView');
+      const isLoggedIn = !!currentUser;
+      authView.classList.toggle('hidden', isLoggedIn);
+      appView.classList.toggle('hidden', !isLoggedIn);
+      if (isLoggedIn) {
+        document.getElementById('userBadge').textContent = currentUser.username;
+        renderDashboard();
+      }
+    }
+
+    function signupUser(username, password) {
+      const u = username.trim();
+      const p = password.trim();
+      if (!u || !p) {
+        showMessage('يرجى إدخال اسم المستخدم وكلمة المرور.', 'error');
+        return;
+      }
+      const users = getUsers();
+      const exists = users.some(x => x.username.toLowerCase() === u.toLowerCase());
+      if (exists) {
+        showMessage('اسم المستخدم موجود بالفعل، اختر اسمًا آخر.', 'error');
+        return;
+      }
+      const user = {
+        id: 'user-' + Date.now() + '-' + Math.random().toString(16).slice(2),
+        username: u,
+        password: hashPassword(p),
+        reports: []
+      };
+      users.push(user);
+      saveUsers(users);
+      currentUser = user;
+      persistCurrentUser();
+      setAppView();
+      showMessage('تم إنشاء الحساب بنجاح.', 'success');
+      document.getElementById('loginForm').reset();
+      document.getElementById('signupForm').reset();
+    }
+
+    function loginUser(username, password) {
+      const u = username.trim();
+      const p = password.trim();
+      if (!u || !p) {
+        showMessage('يرجى إدخال اسم المستخدم وكلمة المرور.', 'error');
+        return;
+      }
+      const users = getUsers();
+      const match = users.find(x => x.username.toLowerCase() === u.toLowerCase() && x.password === hashPassword(p));
+      if (!match) {
+        showMessage('بيانات الدخول غير صحيحة.', 'error');
+        return;
+      }
+      currentUser = match;
+      persistCurrentUser();
+      setAppView();
+      hideMessage();
+    }
+
+    function logoutUser() {
+      currentUser = null;
+      persistCurrentUser();
+      setAppView();
+      document.getElementById('loginForm').reset();
+      document.getElementById('signupForm').reset();
+      showAuthTab('login');
+    }
+
+    function getCurrentReports() {
+      return currentUser ? (currentUser.reports || []) : [];
+    }
+
+    function saveCurrentUserProfile() {
+      const users = getUsers();
+      const idx = users.findIndex(u => u.id === currentUser.id);
+      if (idx >= 0) {
+        users[idx] = { ...currentUser, reports: currentUser.reports || [] };
+        saveUsers(users);
+      }
+    }
+
+    function now() { return new Date().toLocaleString('ar-EG'); }
+
+    function tick() {
+      const el = document.getElementById('clock');
+      if (el) el.textContent = now();
+    }
+
+    function show(id, btn) {
+      document.querySelectorAll('section').forEach(section => section.classList.add('hidden'));
+      const target = document.getElementById(id);
+      if (target) target.classList.remove('hidden');
+      document.querySelectorAll('.nav button').forEach(node => node.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      if (id === 'dashboard') renderDashboard();
+      if (id === 'search') searchReports();
+    }
+
+    function preview(input, target) {
+      images[target] = [];
+      const box = document.getElementById(target);
+      box.innerHTML = '';
+      [...input.files].forEach(file => {
+        const reader = new FileReader();
+        reader.onload = e => {
+          images[target].push(e.target.result);
+          const im = document.createElement('img');
+          im.src = e.target.result;
+          box.appendChild(im);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function val(id) {
+      return document.getElementById(id).value;
+    }
+
+    function resetForm() {
+      ['supplier', 'batch', 'pallet', 'raw', 'brix', 'ph', 'prod', 'notes'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+      ['recvPreview', 'qcPreview', 'prodPreview', 'palletPreview'].forEach(id => {
+        document.getElementById(id).innerHTML = '';
+      });
+      images = { recvPreview: [], qcPreview: [], prodPreview: [], palletPreview: [] };
+      document.getElementById('date').value = new Date().toISOString().slice(0, 10);
+    }
+
+    function saveReport() {
+      if (!currentUser) return;
+      if (!val('supplier') || !val('batch') || !val('raw')) {
+        alert('من فضلك أدخل المورد وBatch والكمية المستلمة.');
+        return;
+      }
+      const id = 'DR-' + new Date().getFullYear() + '-' + String((getCurrentReports().length || 0) + 1).padStart(5, '0');
+      const newReport = {
+        id,
+        date: val('date') || new Date().toISOString().slice(0, 10),
+        time: now(),
+        shift: val('shift'),
+        supplier: val('supplier').trim(),
+        batch: val('batch').trim(),
+        pallet: val('pallet').trim(),
+        raw: Number(val('raw')) || 0,
+        brix: val('brix') ? Number(val('brix')) : null,
+        ph: val('ph') ? Number(val('ph')) : null,
+        result: val('result'),
+        prod: Number(val('prod')) || 0,
+        notes: val('notes').trim(),
+        images: JSON.parse(JSON.stringify(images))
+      };
+      currentUser.reports = [newReport, ...getCurrentReports()];
+      saveCurrentUserProfile();
+      alert('تم حفظ التقرير بنجاح — ' + id);
+      resetForm();
+      renderDashboard();
+    }
+
+    function renderDashboard() {
+      if (!currentUser) return;
+      const today = new Date().toISOString().slice(0, 10);
+      const rs = getCurrentReports().filter(r => r.date === today);
+      document.getElementById('sReports').textContent = rs.length;
+      document.getElementById('sRaw').textContent = rs.reduce((a, r) => a + (Number(r.raw) || 0), 0).toLocaleString() + ' كجم';
+      document.getElementById('sProd').textContent = rs.reduce((a, r) => a + (Number(r.prod) || 0), 0).toLocaleString() + ' كجم';
+      const bx = rs.filter(r => r.brix !== null && r.brix !== undefined);
+      document.getElementById('sBrix').textContent = bx.length ? (bx.reduce((a, r) => a + Number(r.brix), 0) / bx.length).toFixed(1) : '—';
+      document.getElementById('latest').innerHTML = table(rs.slice(0, 10));
+    }
+
+    function table(rs) {
+      if (!rs.length) return '<p class="muted">لا توجد تقارير.</p>';
+      return '<table><tr><th>رقم التقرير</th><th>التاريخ</th><th>المورد</th><th>Batch</th><th>الكمية</th><th>الإنتاج</th><th></th></tr>' + rs.map(r => '<tr><td><span class="tag">' + r.id + '</span></td><td>' + r.date + '</td><td>' + (r.supplier || '—') + '</td><td>' + (r.batch || '—') + '</td><td>' + Number(r.raw || 0).toLocaleString() + '</td><td>' + Number(r.prod || 0).toLocaleString() + '</td><td><button class="btn secondary" type="button" onclick="viewReport(\'' + r.id + '\')">فتح</button></td></tr>').join('') + '</table>';
+    }
+
+    function searchReports() {
+      if (!currentUser) return;
+      const id = val('qId').trim();
+      const d = val('qDate');
+      const s = val('qSupplier').trim().toLowerCase();
+      const b = val('qBatch').trim().toLowerCase();
+      const p = val('qPallet').trim().toLowerCase();
+      const res = val('qResult');
+      const rs = getCurrentReports().filter(r => (
+        (!id || (r.id || '').toLowerCase().includes(id.toLowerCase())) &&
+        (!d || r.date === d) &&
+        (!s || (r.supplier || '').toLowerCase().includes(s)) &&
+        (!b || (r.batch || '').toLowerCase().includes(b)) &&
+        (!p || (r.pallet || '').toLowerCase().includes(p)) &&
+        (!res || r.result === res)
+      ));
+      document.getElementById('results').innerHTML = table(rs);
+    }
+
+    function viewReport(id) {
+      const r = getCurrentReports().find(x => x.id === id);
+      if (!r) return;
+      const imgs = Object.values(r.images || {}).flat().map(x => '<img src="' + x + '" style="max-width:180px;max-height:160px;border-radius:8px;margin:5px">').join('');
+      document.getElementById('results').innerHTML = '<button class="btn secondary" type="button" onclick="searchReports()">← رجوع</button> <button class="btn primary" type="button" onclick="printReport(\'' + r.id + '\')">حفظ كـ PDF</button><div class="card report-detail"><h2>' + r.id + '</h2><div class="grid"><div><b>التاريخ</b><br>' + r.date + '</div><div><b>الشفت</b><br>' + (r.shift || '—') + '</div><div><b>المورد</b><br>' + (r.supplier || '—') + '</div><div><b>Batch</b><br>' + (r.batch || '—') + '</div><div><b>البالتة</b><br>' + (r.pallet || '—') + '</div><div><b>المستلم</b><br>' + Number(r.raw || 0).toLocaleString() + ' كجم</div><div><b>Brix</b><br>' + (r.brix != null ? r.brix : '—') + '</div><div><b>PH</b><br>' + (r.ph != null ? r.ph : '—') + '</div><div><b>نتيجة الفحص</b><br>' + (r.result || '—') + '</div><div><b>الإنتاج</b><br>' + Number(r.prod || 0).toLocaleString() + ' كجم</div></div><hr><b>الصور</b><div>' + (imgs || '<p class="muted">لا توجد صور محفوظة.</p>') + '</div><hr><b>الملاحظات</b><p>' + (r.notes || '—') + '</p></div>';
+    }
+
+    function printReport(id) {
+      const r = getCurrentReports().find(x => x.id === id);
+      if (!r) return;
+      const imgsHtml = Object.values(r.images || {}).flat().map(src => '<img src="' + src + '" style="max-width:260px;max-height:220px;border-radius:8px;margin:6px">').join('');
+      const html = '<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>' + r.id + '</title><style>body{font-family:Tahoma,Arial,sans-serif;padding:20px;color:#17212b}h1{background:#173f35;color:#fff;padding:10px;border-radius:8px}img{display:inline-block}div{margin:8px 0}</style></head><body><h1>تقرير ' + r.id + '</h1><div><b>التاريخ:</b> ' + r.date + ' &nbsp; <b>الشفت:</b> ' + (r.shift || '—') + '</div><div><b>المورد:</b> ' + (r.supplier || '—') + '</div><div><b>Batch:</b> ' + (r.batch || '—') + '</div><div><b>البالتة:</b> ' + (r.pallet || '—') + '</div><div><b>المستلم:</b> ' + Number(r.raw || 0).toLocaleString() + ' كجم</div><div><b>Brix:</b> ' + (r.brix != null ? r.brix : '—') + '</div><div><b>PH:</b> ' + (r.ph != null ? r.ph : '—') + '</div><div><b>نتيجة الفحص:</b> ' + (r.result || '—') + '</div><div><b>الإنتاج:</b> ' + Number(r.prod || 0).toLocaleString() + ' كجم</div><hr><h2>الصور</h2><div>' + (imgsHtml || '<p>لا توجد صور</p>') + '</div><hr><h2>الملاحظات</h2><div>' + (r.notes || '—') + '</div></body></html>';
+      const w = window.open('', '_blank');
+      w.document.write(html);
+      w.document.close();
+      w.focus();
+      setTimeout(() => w.print(), 300);
+    }
+
+    function exportAllAsPDF() {
+      if (!currentUser || !getCurrentReports().length) {
+        alert('لا توجد تقارير لهذا المستخدم للتصدير.');
+        return;
+      }
+      const parts = getCurrentReports().map(r => {
+        const imgs = Object.values(r.images || {}).flat().map(src => '<img src="' + src + '" style="max-width:160px;max-height:120px;border-radius:6px;margin:4px">').join('');
+        return '<section style="margin-bottom:18px"><h2>' + r.id + ' — ' + r.date + '</h2><div><b>المورد:</b> ' + (r.supplier || '—') + ' &nbsp; <b>Batch:</b> ' + (r.batch || '—') + '</div><div><b>المستلم:</b> ' + Number(r.raw || 0).toLocaleString() + ' كجم &nbsp; <b>الإنتاج:</b> ' + Number(r.prod || 0).toLocaleString() + ' كجم</div><div>' + (imgs || '') + '</div><hr></section>';
+      }).join('');
+      const html = '<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>كل تقارير المستخدم</title><style>body{font-family:Tahoma,Arial,sans-serif;padding:20px;color:#17212b}h1{background:#173f35;color:#fff;padding:10px;border-radius:8px}</style></head><body><h1>تصدير جميع تقارير ' + currentUser.username + '</h1>' + parts + '</body></html>';
+      const w = window.open('', '_blank');
+      w.document.write(html);
+      w.document.close();
+      w.focus();
+      setTimeout(() => w.print(), 500);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('date').value = new Date().toISOString().slice(0, 10);
+
+      document.querySelectorAll('.tab').forEach(btn => {
+        btn.addEventListener('click', () => showAuthTab(btn.dataset.auth));
+      });
+
+      document.getElementById('loginForm').addEventListener('submit', e => {
+        e.preventDefault();
+        loginUser(document.getElementById('loginUser').value, document.getElementById('loginPass').value);
+      });
+
+      document.getElementById('signupForm').addEventListener('submit', e => {
+        e.preventDefault();
+        signupUser(document.getElementById('signupUser').value, document.getElementById('signupPass').value);
+      });
+
+      document.getElementById('logoutBtn').addEventListener('click', logoutUser);
+      document.getElementById('exportAllBtn').addEventListener('click', exportAllAsPDF);
+
+      document.querySelectorAll('.nav button').forEach(button => {
+        button.addEventListener('click', () => show(button.dataset.target, button));
+      });
+
+      loadCurrentUser();
+      setAppView();
+      setInterval(tick, 1000);
+      tick();
+    });
+  </script>
+</body>
+</html>
